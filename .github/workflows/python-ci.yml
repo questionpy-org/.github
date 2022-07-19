@@ -1,6 +1,12 @@
 name: "CI"
 
-on: [ workflow_call ]
+on:
+  workflow_call:
+    inputs:
+      packages:
+        type: string
+        required: true
+        description: Space-seperated list of source packages, not including tests
 
 jobs:
   pytest:
@@ -72,7 +78,7 @@ jobs:
         run: pip install -r requirements.txt -r requirements-dev.txt
 
       - name: Run pylint
-        run: pylint questionpy tests
+        run: pylint ${{ inputs.packages }} tests
 
   mypy:
     runs-on: ubuntu-latest
@@ -91,7 +97,7 @@ jobs:
         run: pip install -r requirements.txt -r requirements-dev.txt
 
       - name: Run mypy
-        run: mypy questionpy tests
+        run: mypy ${{ inputs.packages }} tests
 
   flake8:
     runs-on: ubuntu-latest
@@ -110,4 +116,4 @@ jobs:
         run: pip install -r requirements.txt -r requirements-dev.txt
 
       - name: Run flake8
-        run: flake8 questionpy tests
+        run: flake8 ${{ inputs.packages }} tests
