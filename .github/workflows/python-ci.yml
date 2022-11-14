@@ -30,9 +30,9 @@ jobs:
           echo "$PWD/.venv/bin" >> $GITHUB_PATH
 
       - name: Run pytest
-        # For some reason, pytest on GitHub actions defaults to /home/runner/work instead of the working directory
-        # /home/runner/work/questionpy-server/questionpy-server, where the repo is cloned.
-        run: pytest --rootdir=. -c pyproject.toml --cov-report xml --md pytest-report.md
+        run: |
+          coverage run -m pytest --md pytest-report.md
+          coverage xml
 
       - name: Generate coverage report
         uses: irongut/CodeCoverageSummary@v1.2.0
