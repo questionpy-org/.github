@@ -29,10 +29,15 @@ jobs:
           echo "VIRTUAL_ENV=$PWD/.venv" >> $GITHUB_ENV
           echo "$PWD/.venv/bin" >> $GITHUB_PATH
 
+      - name: Get commit
+        uses: pr-mpt/actions-commit-hash@v2
+        id: commit
+
       - name: Run pytest
         run: |
           coverage run -m pytest --md pytest-report.md
           coverage xml
+          coverage html -d ./html_report/projectname_${GITHUB_REF##*/} --title=${{steps.commit.outputs.short}}
 
       - name: Generate coverage report
         uses: irongut/CodeCoverageSummary@v1.3.0
@@ -158,3 +163,25 @@ jobs:
         with:
           name: artifacts
           path: dist
+
+  pages:
+    needs: pytest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get remote branches
+        run: |
+          rm html_report/branches.txt -f
+          git branch --format='%(refname:lstrip=3)' -r >> html_report/branches.txt
+      - name: Setup Pages
+        uses: actions/configure-pages@v2
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          # Upload entire repository
+          path: './html_report/'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1
