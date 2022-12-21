@@ -199,7 +199,7 @@ jobs:
           git remote add -f origin https://github.com/questionpy-org/.github.git
           git config core.sparseCheckout true
           echo "/githubpages" >> .git/info/sparse-checkout
-          git pull origin feature/githubpages 
+          git pull origin feature/github-pages 
           cp ./githubpages/* ./
       - name: Setup Pages
         uses: actions/configure-pages@v2
