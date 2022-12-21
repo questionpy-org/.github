@@ -175,6 +175,16 @@ jobs:
         run: |
           rm html_report/branches.txt -f
           git branch --format='%(refname:lstrip=3)' -r >> html_report/branches.txt
+      - name: Sparse Checkout questionpy/.github/githubpages
+        #TODO: on merge, change branch name to pull from
+        run: |
+          cd html_report/
+          git init
+          git remote add -f origin https://github.com/questionpy-org/.github.git
+          git config core.sparseCheckout true
+          echo "/githubpages" >> .git/info/sparse-checkout
+          git pull origin feature/githubpages 
+          cp ./githubpages/* ./
       - name: Setup Pages
         uses: actions/configure-pages@v2
       - name: Upload artifact
