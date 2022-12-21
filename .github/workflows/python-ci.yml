@@ -37,7 +37,7 @@ jobs:
         run: |
           coverage run -m pytest --md pytest-report.md
           coverage xml
-          coverage html -d ./html_report/projectname_${GITHUB_REF##*/} --title=${{steps.commit.outputs.short}}
+          coverage html -d ./html_report/questionpy_${GITHUB_REF##*/} --title=${{steps.commit.outputs.short}}
 
       - name: Generate coverage report
         uses: irongut/CodeCoverageSummary@v1.3.0
