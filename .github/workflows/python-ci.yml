@@ -29,15 +29,10 @@ jobs:
           echo "VIRTUAL_ENV=$PWD/.venv" >> $GITHUB_ENV
           echo "$PWD/.venv/bin" >> $GITHUB_PATH
 
-      - name: Get commit
-        uses: pr-mpt/actions-commit-hash@v2
-        id: commit
-
       - name: Run pytest
         run: |
           coverage run -m pytest --md pytest-report.md
           coverage xml
-          coverage html -d ./html_report/questionpy_${GITHUB_REF##*/} --title=${{steps.commit.outputs.short}}
 
       - name: Generate coverage report
         uses: irongut/CodeCoverageSummary@v1.3.0
@@ -171,12 +166,18 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
+      - name: Get commit
+        uses: pr-mpt/actions-commit-hash@v2
+        id: commit
+      - name: Generate coverage report
+        run: |
+          coverage html -d ./html_report/questionpy_${GITHUB_REF##*/} --title=${{steps.commit.outputs.short}}
       - name: Get remote branches
         run: |
-          rm html_report/branches.txt -f
-          git branch --format='%(refname:lstrip=3)' -r >> html_report/branches.txt
+          git branch --format='%(refname:lstrip=3)' -r > html_report/branches.txt
       - name: Sparse Checkout questionpy/.github/githubpages
         #TODO: on merge, change branch name to pull from
+        #source: https://stackoverflow.com/questions/600079/how-do-i-clone-a-subdirectory-only-of-a-git-repository/52269934#52269934
         run: |
           cd html_report/
           git init
