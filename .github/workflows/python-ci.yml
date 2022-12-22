@@ -33,6 +33,7 @@ jobs:
         run: |
           coverage run -m pytest --md pytest-report.md
           coverage xml
+          coverage html -d ./html_report --title=${{steps.commit.outputs.short}}
 
       - name: Generate coverage report
         uses: irongut/CodeCoverageSummary@v1.3.0
@@ -64,6 +65,12 @@ jobs:
         with:
           number: ${{ steps.find_pr.outputs.number }}
           path: pytest-report.md
+
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage_report
+          path: html_report
 
   pylint:
     runs-on: ubuntu-latest
@@ -156,5 +163,5 @@ jobs:
       - name: Upload build artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: artifacts
+          name: build
           path: dist
