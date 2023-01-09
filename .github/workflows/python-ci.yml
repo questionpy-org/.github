@@ -3,14 +3,16 @@ name: "CI"
 on:
   workflow_call:
     inputs:
-      packages:
+      pytest-python-versions:
+        # GitHub workflow inputs do not support lists, so we expect a JSON string.
         type: string
         required: true
-        description: Space-seperated list of source packages, not including tests, which are always assumed to be in
-          'tests'.
 
 jobs:
   pytest:
+    strategy:
+      matrix:
+        python-version: ${{ fromJSON(inputs.pytest-python-versions) }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -20,7 +22,7 @@ jobs:
           poetry config -n virtualenvs.in-project true
       - uses: actions/setup-python@v4
         with:
-          python-version-file: '.python-version'
+          python-version: ${{ matrix.python-version }}
           cache: poetry
       - name: Install dependencies
         run: poetry install -n
@@ -35,7 +37,8 @@ jobs:
 
       - name: Run pytest
         run: |
-          coverage run -m pytest --md pytest-report.md
+          # We tell tox to run envs with the factor "pytest", tox-gh-actions narrows down the python version for us.
+          tox -f pytest -- --md pytest-report.md
           coverage xml
           coverage html -d ./html_report --title=${{steps.commit.outputs.short}}
 
@@ -86,7 +89,7 @@ jobs:
           poetry config -n virtualenvs.in-project true
       - uses: actions/setup-python@v4
         with:
-          python-version-file: '.python-version'
+          python-version: ${{ fromJSON(inputs.pytest-python-versions)[0] }}
           cache: poetry
       - name: Install dependencies
         run: poetry install -n
@@ -96,7 +99,7 @@ jobs:
           echo "$PWD/.venv/bin" >> $GITHUB_PATH
 
       - name: Run pylint
-        run: pylint ${{ inputs.packages }} tests
+        run: tox -f pylint
 
   mypy:
     runs-on: ubuntu-latest
@@ -108,7 +111,7 @@ jobs:
           poetry config -n virtualenvs.in-project true
       - uses: actions/setup-python@v4
         with:
-          python-version-file: '.python-version'
+          python-version: ${{ fromJSON(inputs.pytest-python-versions)[0] }}
           cache: poetry
       - name: Install dependencies
         run: poetry install -n
@@ -118,7 +121,7 @@ jobs:
           echo "$PWD/.venv/bin" >> $GITHUB_PATH
 
       - name: Run mypy
-        run: mypy ${{ inputs.packages }} tests
+        run: tox -f mypy
 
   flake8:
     runs-on: ubuntu-latest
@@ -130,7 +133,7 @@ jobs:
           poetry config -n virtualenvs.in-project true
       - uses: actions/setup-python@v4
         with:
-          python-version-file: '.python-version'
+          python-version: ${{ fromJSON(inputs.pytest-python-versions)[0] }}
           cache: poetry
       - name: Install dependencies
         run: poetry install -n
@@ -140,7 +143,7 @@ jobs:
           echo "$PWD/.venv/bin" >> $GITHUB_PATH
 
       - name: Run flake8
-        run: flake8 ${{ inputs.packages }} tests
+        run: tox -f flake8
 
   build:
     runs-on: ubuntu-latest
@@ -152,7 +155,7 @@ jobs:
           poetry config -n virtualenvs.in-project true
       - uses: actions/setup-python@v4
         with:
-          python-version-file: '.python-version'
+          python-version: ${{ fromJSON(inputs.pytest-python-versions)[0] }}
           cache: poetry
       - name: Install dependencies
         run: poetry install -n
