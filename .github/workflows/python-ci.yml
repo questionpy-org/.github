@@ -62,17 +62,6 @@ jobs:
         if: always()
         run: cat pytest-report.md > "$GITHUB_STEP_SUMMARY"
 
-      - uses: jwalton/gh-find-current-pr@v1
-        if: always()
-        id: find_pr
-
-      - name: Comment on open PR
-        uses: marocchino/sticky-pull-request-comment@v2
-        if: always() && steps.find_pr.outputs.number
-        with:
-          number: ${{ steps.find_pr.outputs.number }}
-          path: pytest-report.md
-
       - name: Upload coverage artifacts
         uses: actions/upload-artifact@v3
         with:
