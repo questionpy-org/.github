@@ -7,29 +7,36 @@ on:
         # GitHub workflow inputs do not support lists, so we expect a JSON string.
         type: string
         required: true
+      packages:
+        type: string
+        description: Space-separated list of packages, including tests.
+
+env:
+  POETRY_VIRTUALENVS_IN_PROJECT: true
 
 jobs:
   pytest:
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ${{ fromJSON(inputs.pytest-python-versions) }}
-    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Install poetry
-        run: |
-          pipx install "poetry>=1.1.14,<2.0.0"
-          poetry config -n virtualenvs.in-project true
+      - # setup-python's poetry caching requires poetry to be installed, so we install it before python.
+        name: Install poetry
+        run: pip install "poetry>=1.1.14,<2.0.0"
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
           cache: poetry
+
       - name: Install dependencies
         run: poetry install -n
       - name: Activate virtualenv
         run: |
           echo "VIRTUAL_ENV=$PWD/.venv" >> $GITHUB_ENV
           echo "$PWD/.venv/bin" >> $GITHUB_PATH
+      - run: python --version
 
       - name: Get commit
         uses: pr-mpt/actions-commit-hash@v2
@@ -37,10 +44,9 @@ jobs:
 
       - name: Run pytest
         run: |
-          # We tell tox to run envs with the factor "pytest", tox-gh-actions narrows down the python version for us.
-          tox -f pytest -- --md pytest-report.md
+          coverage run -m pytest --md pytest-report.md
           coverage xml
-          coverage html -d ./html_report --title=${{steps.commit.outputs.short}}
+          coverage html -d ./html_report --title='${{ steps.commit.outputs.short }}'
 
       - name: Generate coverage report
         uses: irongut/CodeCoverageSummary@v1.3.0
@@ -72,86 +78,83 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Install poetry
-        run: |
-          pipx install "poetry>=1.1.14,<2.0.0"
-          poetry config -n virtualenvs.in-project true
+      - # setup-python's poetry caching requires poetry to be installed, so we install it before python.
+        name: Install poetry
+        run: pip install "poetry>=1.1.14,<2.0.0"
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ fromJSON(inputs.pytest-python-versions)[0] }}
           cache: poetry
+
       - name: Install dependencies
         run: poetry install -n
       - name: Activate virtualenv
         run: |
           echo "VIRTUAL_ENV=$PWD/.venv" >> $GITHUB_ENV
           echo "$PWD/.venv/bin" >> $GITHUB_PATH
+      - run: python --version
 
       - name: Run pylint
-        run: tox -f pylint
+        run: pylint ${{ inputs.packages }}
 
   mypy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: Install poetry
-        run: |
-          pipx install "poetry>=1.1.14,<2.0.0"
-          poetry config -n virtualenvs.in-project true
+        run: pip install "poetry>=1.1.14,<2.0.0"
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ fromJSON(inputs.pytest-python-versions)[0] }}
           cache: poetry
+
       - name: Install dependencies
         run: poetry install -n
       - name: Activate virtualenv
         run: |
           echo "VIRTUAL_ENV=$PWD/.venv" >> $GITHUB_ENV
           echo "$PWD/.venv/bin" >> $GITHUB_PATH
+      - run: python --version
 
       - name: Run mypy
-        run: tox -f mypy
+        run: mypy ${{ inputs.packages }}
 
   flake8:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: Install poetry
-        run: |
-          pipx install "poetry>=1.1.14,<2.0.0"
-          poetry config -n virtualenvs.in-project true
+        run: pip install "poetry>=1.1.14,<2.0.0"
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ fromJSON(inputs.pytest-python-versions)[0] }}
           cache: poetry
+
       - name: Install dependencies
         run: poetry install -n
       - name: Activate virtualenv
         run: |
           echo "VIRTUAL_ENV=$PWD/.venv" >> $GITHUB_ENV
           echo "$PWD/.venv/bin" >> $GITHUB_PATH
+      - run: python --version
 
       - name: Run flake8
-        run: tox -f flake8
+        run: flake8 ${{ inputs.packages }}
 
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: Install poetry
-        run: |
-          pipx install "poetry>=1.1.14,<2.0.0"
-          poetry config -n virtualenvs.in-project true
+        run: pip install "poetry>=1.1.14,<2.0.0"
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ fromJSON(inputs.pytest-python-versions)[0] }}
           cache: poetry
+
       - name: Install dependencies
         run: poetry install -n
-      - name: Activate virtualenv
-        run: |
-          echo "VIRTUAL_ENV=$PWD/.venv" >> $GITHUB_ENV
-          echo "$PWD/.venv/bin" >> $GITHUB_PATH
+      - run: python --version
 
       - name: Build
         run: poetry build -n
