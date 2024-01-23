@@ -21,11 +21,11 @@ jobs:
       matrix:
         python-version: ${{ fromJSON(inputs.pytest-python-versions) }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - # setup-python's poetry caching requires poetry to be installed, so we install it before python.
         name: Install poetry
         run: pip install "poetry>=1.1.14,<2.0.0"
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: poetry
@@ -39,7 +39,7 @@ jobs:
       - run: python --version
 
       - name: Get commit
-        uses: pr-mpt/actions-commit-hash@v2
+        uses: pr-mpt/actions-commit-hash@v3
         id: commit
 
       - name: Run pytest
@@ -69,19 +69,19 @@ jobs:
         run: cat pytest-report.md > "$GITHUB_STEP_SUMMARY"
 
       - name: Upload coverage artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: coverage_report
+          name: coverage_report_${{ matrix.python-version }}
           path: html_report
 
   pylint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - # setup-python's poetry caching requires poetry to be installed, so we install it before python.
         name: Install poetry
         run: pip install "poetry>=1.1.14,<2.0.0"
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ fromJSON(inputs.pytest-python-versions)[0] }}
           cache: poetry
@@ -100,10 +100,10 @@ jobs:
   mypy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install poetry
         run: pip install "poetry>=1.1.14,<2.0.0"
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ fromJSON(inputs.pytest-python-versions)[0] }}
           cache: poetry
@@ -122,10 +122,10 @@ jobs:
   flake8:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install poetry
         run: pip install "poetry>=1.1.14,<2.0.0"
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ fromJSON(inputs.pytest-python-versions)[0] }}
           cache: poetry
@@ -144,10 +144,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install poetry
         run: pip install "poetry>=1.1.14,<2.0.0"
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ fromJSON(inputs.pytest-python-versions)[0] }}
           cache: poetry
@@ -160,7 +160,7 @@ jobs:
         run: poetry build -n
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: build
           path: dist
