@@ -1,4 +1,4 @@
-name: "CI"
+name: Python Checks
 
 on:
   workflow_call:
@@ -6,12 +6,14 @@ on:
       pytest-python-versions:
         # GitHub workflow inputs do not support lists, so we expect a JSON string.
         type: string
+        description: JSON-formatted string representing a list of Python versions.
         required: true
       packages:
         type: string
         description: Space-separated list of packages, including tests.
       poetry-version-spec:
         type: string
+        description: Poetry version specifier.
         default: ">=2.1.3,<3.0.0"
 
 env:
@@ -24,22 +26,14 @@ jobs:
       matrix:
         python-version: ${{ fromJSON(inputs.pytest-python-versions) }}
     steps:
-      - uses: actions/checkout@v4
-      - # setup-python's poetry caching requires poetry to be installed, so we install it before python.
-        name: Install poetry
-        run: pip install "poetry ${{ inputs.poetry-version-spec }}"
-      - uses: actions/setup-python@v5
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - uses: questionpy-org/actions-setup/setup-python@v1
         with:
           python-version: ${{ matrix.python-version }}
-          cache: poetry
-
-      - name: Install dependencies
-        run: poetry install --no-interaction --only main,dev,test
-      - name: Activate virtualenv
-        run: |
-          echo "VIRTUAL_ENV=$PWD/.venv" >> $GITHUB_ENV
-          echo "$PWD/.venv/bin" >> $GITHUB_PATH
-      - run: python --version
+          poetry-version-spec: ${{ inputs.poetry-version-spec }}
+          poetry-options: --only main,dev,test
 
       - name: Get commit
         uses: pr-mpt/actions-commit-hash@v3
@@ -47,9 +41,9 @@ jobs:
 
       - name: Run pytest
         run: |
-          coverage run -m pytest --md pytest-report.md
-          coverage xml
-          coverage html -d ./html_report --title='${{ steps.commit.outputs.short }}'
+          poetry run --no-interaction -- coverage run -m pytest --md pytest-report.md
+          poetry run --no-interaction -- coverage xml
+          poetry run --no-interaction -- coverage html -d ./html_report --title='${{ steps.commit.outputs.short }}'
 
       - name: Generate coverage report
         uses: irongut/CodeCoverageSummary@v1.3.0
@@ -80,83 +74,58 @@ jobs:
   ruff-format:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Install poetry
-        run: pip install "poetry ${{ inputs.poetry-version-spec }}"
-      - uses: actions/setup-python@v5
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - uses: questionpy-org/actions-setup/setup-python@v1
         with:
           python-version: ${{ fromJSON(inputs.pytest-python-versions)[0] }}
-          cache: poetry
-
-      - name: Install dependencies
-        run: poetry install --no-interaction --no-root --only linter
-      - name: Activate virtualenv
-        run: |
-          echo "VIRTUAL_ENV=$PWD/.venv" >> $GITHUB_ENV
-          echo "$PWD/.venv/bin" >> $GITHUB_PATH
-      - run: python --version
+          poetry-version-spec: ${{ inputs.poetry-version-spec }}
+          poetry-options: --no-root --only linter
 
       - name: Run ruff format --check
-        run: ruff format --check
+        run: poetry run --no-interaction -- ruff format --check
 
   ruff-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Install poetry
-        run: pip install "poetry ${{ inputs.poetry-version-spec }}"
-      - uses: actions/setup-python@v5
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - uses: questionpy-org/actions-setup/setup-python@v1
         with:
           python-version: ${{ fromJSON(inputs.pytest-python-versions)[0] }}
-          cache: poetry
-
-      - name: Install dependencies
-        run: poetry install --no-interaction --no-root --only linter
-      - name: Activate virtualenv
-        run: |
-          echo "VIRTUAL_ENV=$PWD/.venv" >> $GITHUB_ENV
-          echo "$PWD/.venv/bin" >> $GITHUB_PATH
-      - run: python --version
+          poetry-version-spec: ${{ inputs.poetry-version-spec }}
+          poetry-options: --no-root --only linter
 
       - name: Run ruff check
-        run: ruff check --output-format=github
+        run: poetry run --no-interaction -- ruff check --output-format=github
 
   mypy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Install poetry
-        run: pip install "poetry ${{ inputs.poetry-version-spec }}"
-      - uses: actions/setup-python@v5
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - uses: questionpy-org/actions-setup/setup-python@v1
         with:
           python-version: ${{ fromJSON(inputs.pytest-python-versions)[0] }}
-          cache: poetry
-
-      - name: Install dependencies
-        run: poetry install --no-interaction --no-root --only main,dev,test,type-checker
-      - name: Activate virtualenv
-        run: |
-          echo "VIRTUAL_ENV=$PWD/.venv" >> $GITHUB_ENV
-          echo "$PWD/.venv/bin" >> $GITHUB_PATH
-      - run: python --version
+          poetry-version-spec: ${{ inputs.poetry-version-spec }}
+          poetry-options: --no-root --only main,dev,test,type-checker
 
       - name: Run mypy
-        run: mypy ${{ inputs.packages }}
+        run: poetry run --no-interaction -- mypy ${{ inputs.packages }}
 
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Install poetry
-        run: pip install "poetry ${{ inputs.poetry-version-spec }}"
-      - uses: actions/setup-python@v5
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - uses: questionpy-org/actions-setup/setup-python@v1
         with:
           python-version: ${{ fromJSON(inputs.pytest-python-versions)[0] }}
-          cache: poetry
-
-      - name: Install dependencies
-        run: poetry install --no-interaction
-      - run: python --version
+          poetry-version-spec: ${{ inputs.poetry-version-spec }}
 
       - name: Build
         run: poetry build --no-interaction
