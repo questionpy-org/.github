@@ -1,0 +1,74 @@
+name: Node.js Checks
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        type: string
+        description: The directory in which npm searches for the `package.json` file.
+        required: true
+      prefix:
+        type: string
+        description: The directory in which npm searches for the `package.json` file.
+        default: "."
+
+jobs:
+  format-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: questionpy-org/actions-setup/setup-node@v1
+        with:
+          node-version: ${{ inputs.node-version }}
+          prefix: ${{ inputs.prefix }}
+
+      - name: Check formatting
+        run: npm run format-check --prefix ${{ inputs.prefix }}
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: questionpy-org/actions-setup/setup-node@v1
+        with:
+          node-version: ${{ inputs.node-version }}
+          prefix: ${{ inputs.prefix }}
+
+      - name: Lint
+        run: npm run lint --prefix ${{ inputs.prefix }}
+
+  type-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: questionpy-org/actions-setup/setup-node@v1
+        with:
+          node-version: ${{ inputs.node-version }}
+          prefix: ${{ inputs.prefix }}
+
+      - name: Type check
+        run: npm run type-check --prefix ${{ inputs.prefix }}
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: questionpy-org/actions-setup/setup-node@v1
+        with:
+          node-version: ${{ inputs.node-version }}
+          prefix: ${{ inputs.prefix }}
+
+      - name: Run tests
+        run: npm run test --prefix ${{ inputs.prefix }}
